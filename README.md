@@ -1,0 +1,1 @@
+This code is used at KEELPNO (Hellenic Centre for Disease Control and Prevention) to analyze the data from point-of-care surveillance at migrant reception centres, and automatically produce surveillance reports.
