@@ -31,36 +31,6 @@ camps <- camps[order(camps$codecamp),]
 
 aggr <- aggregate(dat[,15:49], by=list(hmedil=dat$hmedil), sum, na.rm=TRUE)
 aggrD <- aggregate(dat[,15:49], by=list(hmedil=dat$hmedil, codecamp=dat$codecamp), sum, na.rm=TRUE)
-# aggr[nrow(aggr), "n1sum"] <- 200   # Artificially create an alert...
-
-
-# Συνάρτηση υπολογισμού της εβδομάδας κατά ISO (v2.0)
-isoweek <- function(x, type="week", sep="-", inv=FALSE, colnames=c("isoyear","isoweek")) {
-  alts=c("week","year","both_text","both_num","matrix")
-  if(!(type %in% alts)) stop("Unknown isoweek type requested!")
-  x.date<-as.Date(x)
-  x.weekday<-as.integer(format(x.date,"%w"))
-  x.weekday[x.weekday==0]=7
-  x.nearest.thu<-x.date-x.weekday+4
-  x.isoyear<-as.integer(substring(x.nearest.thu,1,4)) # Μπορεί οι πρώτες μέρες του χρόνου να ανήκουν (κατά ISO) στην προηγούμενη χρονιά!
-  x.isoweek<-(as.integer(x.nearest.thu-as.Date(paste(x.isoyear,"-1-1",sep="")))%/%7)+1
-  switch(type,
-    week = x.isoweek,
-    year = x.isoyear,
-    both_text = if (inv) {
-      ifelse((is.na(x.isoyear) | is.na(x.isoweek)),NA,paste(x.isoweek,x.isoyear,sep=sep))
-    } else {
-      ifelse((is.na(x.isoyear) | is.na(x.isoweek)),NA,paste(x.isoyear,x.isoweek,sep=sep))
-    },
-    both_num = ifelse((is.na(x.isoyear) | is.na(x.isoweek)),NA,x.isoyear*100+x.isoweek),
-    matrix = if (inv) {
-      `colnames<-`(cbind(x.isoweek, x.isoyear), rev(colnames))
-    } else {
-      `colnames<-`(cbind(x.isoyear, x.isoweek), colnames)
-    }
-  )
-}
-
 
 
 fitOne <- function(x, n, dates, title=c(EN=NA, GR=NA), wkly=FALSE, Z=2, excludeOutbreaks=TRUE, 
@@ -219,7 +189,7 @@ plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkl
         "EN" = c("Observed proportional morbidity", "Expected proportional morbidity",
             paste("Alert level (", pdValLab, "% prediction interval)", sep=""), "Alert", "Warning"),
         "GR" = c("Παρατηρούμενη αναλογική νοσηρότητα", "Αναμενόμενη αναλογική νοσηρότητα",
-            paste("Όριο επιφυλακής (", pdValLab, "% διάστημα πρόβλεψης)", sep=""), "Επιφυλακή", "Συναγερμός"))
+            paste("Όριο επιφυλακής (", pdValLab, "% διάστημα πρόβλεψης)", sep=""), "Επιφυλακή", "Ειδοποίηση"))
     
     if (legend) {
         legend("bottomleft", legend=legendtxt[[lang]][1:3], lwd=lwd, 
@@ -300,7 +270,7 @@ plotAges <- function(syndrome, camp=NA, ymax=NA, lang="EN", legend=TRUE, goback=
     
     legendtxt <- list(
         "EN" = c("Age 0-4", "Agr 5-17", "Age 18+", "Alert", "Warning"),
-        "GR" = c("0-4 ετών", "5-17 ετών", "18+ ετών", "Επιφυλακή", "Συναγερμός"))
+        "GR" = c("0-4 ετών", "5-17 ετών", "18+ ετών", "Επιφυλακή", "Ειδοποίηση"))
     
     if (legend) {
         legend("bottomleft", legend=legendtxt[[lang]][1:3], lwd=2, 

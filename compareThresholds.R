@@ -107,8 +107,8 @@ plotAll <- function(fit, ymax=NA, title=NA, lang="EN", goback=28, plottype="l", 
 }
 
 
-dir.create("output")
-dir.create("output/comparisons")
+dir.create("output", showWarnings=FALSE)
+dir.create("output/comparisons", showWarnings=FALSE)
 
 for (i in c(1:14)) {
     png(sprintf("output/comparisons/algoComparison%s.png", i), width=5000, height=2500, res=400)

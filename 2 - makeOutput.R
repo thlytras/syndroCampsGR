@@ -45,6 +45,7 @@ if (!exists("fits")) load("output/latest_fits.RData")
 if (!exists("tgtdate")) stop("\nERROR: No target date selected!\nPut the target date on an object named 'tgtdate' to continue...\n")
 
 tgtdatef <- format(tgtdate, "%d-%m-%Y")
+tgtdatef2 <- format(tgtdate, "%Y%m%d")
 
 
 noAlertMsg <- data.frame(
@@ -53,11 +54,11 @@ noAlertMsg <- data.frame(
         "*** There are no across-camp alerts for the past 7 days ***",
         "*** There are no camp-specific alerts for the past 7 days ***",
         "*** There are no alerts today ***"),
-    GR=c("*** Δεν υπάρχει συνολική ειδοποίηση για κανένα σύνδρομο σήμερα ***",
-        "*** Δεν υπάρχει ειδοποίηση από κανένα κέντρο σήμερα ***",
-        "*** Δεν υπάρχει συνολική ειδοποίηση για κανένα σύνδρομο τις τελευταίες 7 ημέρες ***",
-        "*** Δεν υπάρχει ειδοποίηση από κανένα κέντρο τις τελευταίες 7 ημέρες ***",
-        "*** Δεν υπάρχει καμμία ειδοποίηση σήμερα ***"))
+    GR=c("*** Δεν υπάρχει σήμα επιφυλακής για κανένα σύνδρομο σήμερα ***",
+        "*** Δεν υπάρχει σήμα επιφυλακής από κανένα κέντρο σήμερα ***",
+        "*** Δεν υπάρχει σήμα επιφυλακής για κανένα σύνδρομο τις τελευταίες 7 ημέρες ***",
+        "*** Δεν υπάρχει σήμα επιφυλακής από κανένα κέντρο τις τελευταίες 7 ημέρες ***",
+        "*** Δεν υπάρχει κανένα σήμα επιφυλακής σήμερα ***"))
 alDayLabels <-data.frame(
     EN=c("Graph %s: Proportional morbidity of %s, based on reports from all camps",
         "Graph %s: Proportional morbidity of %s, based on reports from camp %s - %s"),
@@ -70,8 +71,12 @@ Ncamps1 <- length(unique(subset(aggrD, hmedil==tgtdate-1)$codecamp))
 Ncamps7 <- length(unique(subset(aggrD, hmedil>=tgtdate-7)$codecamp))
 
 
-makeTable1 <- function(lang) {
-    table1 <- do.call("rbind", lapply(1:14, function(i) subset(fits[[i]], dates==tgtdate-1)))
+makeTable1 <- function(lang, wkly=FALSE) {
+    if (wkly) {
+        table1 <- do.call("rbind", lapply(1:14, function(i) subset(fits[[i]], dates==tgtdate-1)))
+    } else {
+        table1 <- do.call("rbind", lapply(1:14, function(i) subset(fitsW[[i]], weeks==tgtweek)))
+    }
     rownames(table1) <- NULL
     if(nrow(table1)==0) stop(sprintf("ΣΦΑΛΜΑ: Δεν υπάρχει ούτε μια δήλωση για τις %s.\n Μήπως το αρχείο εισόδου είναι παλιό??", tgtdate-1))
     table1$syndrome <- syndroDesc[,lang]
@@ -86,7 +91,7 @@ makeTable1 <- function(lang) {
         EN = c("Syndrome", "No of cases", "Obs. prop. morbidity", 
             "Exp. prop. morbidity", "Z-score", "Alert", "Alarm"),
         GR = c("Σύνδρομο", "αρ. περιστατικών", "Παρατηρούμενη αναλ. νοσηρότητα", 
-            "Αναμενόμενη αναλ. νοσηρότητα", "Z-score", "Ειδοποίηση", "Συναγερμός"))[[lang]]
+            "Αναμενόμενη αναλ. νοσηρότητα", "Z-score", "Επιφυλακή", "Ειδοποίηση"))[[lang]]
     table1
 }
 
@@ -180,43 +185,59 @@ formatTableB <- function(tb, lang="EN") {
 
 dir.create("output", showWarnings=FALSE)
 dir.create("output/daily", showWarnings=FALSE)
-dir.create(sprintf("output/daily/%s", tgtdate), showWarnings=FALSE)
+dir.create(sprintf("output/daily/%s", tgtdatef2), showWarnings=FALSE)
 
 cat("Φτιάχνω τις αναφορές (σε δύο γλώσσες)...\n")
 lang <- "EN"
-odfWeave("input/daily-en-template.odt", paste("output/daily/", tgtdate, "/daily-en - ", tgtdate, ".odt", sep=""))
+odfWeave("input/daily-en-template.odt", paste("output/daily/", tgtdatef2, "/daily-en-", tgtdatef2, ".odt", sep=""))
 lang <- "GR"
-odfWeave("input/daily-gr-template.odt", paste("output/daily/", tgtdate, "/daily-gr - ", tgtdate, ".odt", sep=""))
+odfWeave("input/daily-gr-template.odt", paste("output/daily/", tgtdatef2, "/daily-gr-", tgtdatef2, ".odt", sep=""))
+
+
+if (tgtweek>0) {
+    dir.create("output", showWarnings=FALSE)
+    dir.create("output/weekly", showWarnings=FALSE)
+    dir.create(sprintf("output/weekly/%s", tgtweek), showWarnings=FALSE)
+
+    NcampsW <- length(unique(subset(aggrD, isoweek(hmedil, "both_num")==tgtweek)$codecamp))
+    tgtweekR <- paste(format(isoweekStart(tgtweek), "%d/%m"), c(EN="to", GR="έως")[lang], format(isoweekStart(tgtweek)+6, "%d/%m"))
+    
+    cat("Φτιάχνω τις εβδομαδιαίες αναφορές (σε δύο γλώσσες)...\n")
+    #lang <- "EN"
+    #odfWeave("input/weekly-en-template.odt", paste("output/weekly/", tgtweek, "/weekly-en-", tgtweek, ".odt", sep=""))
+    lang <- "GR"
+    odfWeave("input/weekly-gr-template.odt", paste("output/weekly/", tgtweek, "/weekly-gr-", tgtweek, ".odt", sep=""))
+}
 
 
 cat("Ολοκληρώθηκαν οι αναφορές (σε δύο γλώσσες).\n")
 cat("Φτιάχνω τώρα αναλυτικό output ανά κέντρο, παρακαλώ περιμένετε...\n")
 
 makePNG <- function(lang="EN") {
-    dir.create(sprintf("output/daily/%s", tgtdate), showWarnings=FALSE)   # To be on the safe side...
-    dir.create(sprintf("output/daily/%s/%s", tgtdate, lang), showWarnings=FALSE)   # To be on the safe side...
+    dir.create(sprintf("output/daily/%s", tgtdatef2), showWarnings=FALSE)   # To be on the safe side...
+    dir.create(sprintf("output/daily/%s/%s", tgtdatef2, lang), showWarnings=FALSE)   # To be on the safe side...
     for (x in camps$codecamp) {
-        dir.create(sprintf("output/daily/%s/%s/%s", tgtdate, lang, x), showWarnings=FALSE)
+        dir.create(sprintf("output/daily/%s/%s/%s", tgtdatef2, lang, x), showWarnings=FALSE)
         for (i in 1:14) {
-            png(sprintf("output/daily/%s/%s/%s/camp%s - %s - %s.png", tgtdate, lang, x, x, i, tgtdate), width=3800, height=2200, res=400)
+            png(sprintf("output/daily/%s/%s/%s/camp%s-%s-%s.png", tgtdatef2, lang, x, x, i, tgtdatef2), width=3800, height=2200, res=400)
             plotOne(fitsD[[x]][[i]], lang=lang)
             dev.off()
         }
     }
     for (i in 1:14) {
-        png(sprintf("output/daily/%s/%s/allcamps - %s - %s.png", tgtdate, lang, i, tgtdate), width=3800, height=2200, res=400)
+        png(sprintf("output/daily/%s/%s/allcamps-%s-%s.png", tgtdatef2, lang, i, tgtdatef2), width=3800, height=2200, res=400)
         plotOne(fits[[i]], lang=lang)
         dev.off()
     }
 }
 
 
-dir.create(sprintf("output/daily/%s", tgtdate), showWarnings=FALSE)
+dir.create(sprintf("output/daily/%s", tgtdatef2), showWarnings=FALSE)
 for (lang in c("EN", "GR")) {
     # Setting up directories
-    dir.create(sprintf("output/daily/%s/%s", tgtdate, lang), showWarnings=FALSE)
+    dir.create(sprintf("output/daily/%s/%s", tgtdatef2, lang), showWarnings=FALSE)
     for (x in camps$codecamp) {
-        cairo_pdf(sprintf("output/daily/%s/%s/report%s - %s - %s.pdf", tgtdate, lang, lang, x, tgtdate), 
+        cairo_pdf(sprintf("output/daily/%s/%s/report%s-%s-%s.pdf", tgtdatef2, lang, lang, x, tgtdatef2), 
                 width=21/2.54, height=29.7/2.54, pointsize=4)
         par(oma=c(15,15,25,15), mfrow=c(7,2))
         for (i in 1:14) {
@@ -229,7 +250,7 @@ for (lang in c("EN", "GR")) {
                 side=3, cex=3.5, outer=TRUE, line=8)
         dev.off()
     }
-    cairo_pdf(sprintf("output/daily/%s/%s/report%s - All - %s.pdf", tgtdate, lang, lang, tgtdate), 
+    cairo_pdf(sprintf("output/daily/%s/%s/report%s-All-%s.pdf", tgtdatef2, lang, lang, tgtdatef2), 
             width=21/2.54, height=29.7/2.54, pointsize=4)
     par(oma=c(15,15,25,15), mfrow=c(7,2))
     for (i in 1:14) {
@@ -243,16 +264,16 @@ for (lang in c("EN", "GR")) {
     dev.off()
     
     a <- formatTableA(AllAlerts, lang=lang); a <- a[order(a[,4], a[,1], a[,2]),]
-    write.csv2(a, file=sprintf("output/daily/%s/%s/AlertsAllCamps%s - %s.csv", tgtdate, lang, lang, tgtdate), row.names=FALSE, na="")
+    write.csv2(a, file=sprintf("output/daily/%s/%s/AlertsAllCamps%s-%s.csv", tgtdatef2, lang, lang, tgtdatef2), row.names=FALSE, na="")
     a <- formatTableB(AllAlertsD, lang=lang); a <- a[order(a[,4], a[,1], a[,2]),]
-    write.csv2(a, file=sprintf("output/daily/%s/%s/AlertsByCamp%s - %s.csv", tgtdate, lang, lang, tgtdate), row.names=FALSE, na="")
+    write.csv2(a, file=sprintf("output/daily/%s/%s/AlertsByCamp%s-%s.csv", tgtdatef2, lang, lang, tgtdatef2), row.names=FALSE, na="")
     rm(a)
 }
 
 
 lang <- "EN"
 
-save.image(sprintf("output/daily/%s/output %s.RData", tgtdate, tgtdate))
+save.image(sprintf("output/daily/%s/output %s.RData", tgtdatef2, tgtdatef2))
 save.image("output/latest_output.RData")
 
 cat("Ολοκληρώθηκε!\n\n")
