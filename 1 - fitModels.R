@@ -25,8 +25,13 @@ dat <- subset(dat, hmedil<tgtdate)
 
 camps <- data.frame(codecamp = unique(dat$codecamp),
     EN = sapply(unique(dat$codecamp), function(x)rev(dat$campname[dat$codecamp==x])[1]),
-    GR = sapply(unique(dat$codecamp), function(x)rev(dat$camp[dat$codecamp==x])[1]))
+    GR = sapply(unique(dat$codecamp), function(x)rev(dat$camp[dat$codecamp==x])[1]), stringsAsFactors=FALSE)
 camps <- camps[order(camps$codecamp),]
+
+# Polish the camp descriptions as much as possible
+campsC <- read.csv("input/camps.csv", stringsAsFactors=FALSE)
+camps$EN[match(campsC$codecamp, camps$codecamp)] <- campsC$EN
+camps$GR[match(campsC$codecamp, camps$codecamp)] <- campsC$GR
 
 
 aggr <- aggregate(dat[,15:49], by=list(hmedil=dat$hmedil), sum, na.rm=TRUE)
@@ -122,11 +127,23 @@ cat("\n")
 
 
 
-plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkly=FALSE, goback=c(28,6)[wkly+1], plottype="l", pdValLab=97.5, mar=NA, lwd=2, legend.y=-0.65) {
+plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkly=FALSE, goback=c(35,6)[wkly+1], plottype="l", pdValLab=97.5, mar=NA, lwd=2, legend.y=-0.65, stoptgt=FALSE) {
+    xlimoffset <- 0
+    if (stoptgt) {
+        if (wkly) {
+            a <- as.integer(fit$weeks - tgtweek)
+        } else {
+            a <- as.integer(fit$dates - tgtdate)
+        }
+            a <- a[a<=0]
+            xlimoffset <- which(abs(a)==min(abs(a))) - nrow(fit)
+    }
     # Determine time window
-    xlim <- nrow(fit) - c(goback,0)
+    xlim <- nrow(fit) - c(goback,0) + xlimoffset
     if (xlim[1]<1) xlim[1] <- 1
     xlim[3] <- xlim[2] + c(7,2)[wkly+1]
+    
+    if (lang=="GR") options("OutDec"=",")
     
     if (!wkly){
         dates <- c(fit$dates, seq(fit$dates[nrow(fit)], length.out=7, by=1))
@@ -165,7 +182,11 @@ plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkl
         axis(1, at=xlim[1]:xlim[3], labels=axis1lab, tcl=-0.25)
     } else {
         axis(1, at=xlim[1]:xlim[3], labels=NA, tcl=-0.25)
-        axis(1, at=mondays, labels=fmtDate(dates[mondays], lang=lang))
+        if (lang=="EN") {
+            axis(1, at=mondays, labels=fmtDate(dates[mondays], lang=lang))
+        } else {
+            axis(1, at=mondays, labels=format(dates[mondays], "%d/%m"))
+        }
     }
     axis(2, at=axTicks(2), labels=axTicks(2)*100, las=1)
     with(fit, points(y=(Pnb/n)[xlim[1]:xlim[2]], x=xlim[1]:xlim[2], 
@@ -187,18 +208,19 @@ plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkl
     
     legendtxt <- list(
         "EN" = c("Observed proportional morbidity", "Expected proportional morbidity",
-            paste("Alert level (", pdValLab, "% prediction interval)", sep=""), "Alert", "Warning"),
+            paste("Warning level (", pdValLab, "% prediction interval)", sep=""), "Warning", "Alert"),
         "GR" = c("Παρατηρούμενη αναλογική νοσηρότητα", "Αναμενόμενη αναλογική νοσηρότητα",
-            paste("Όριο επιφυλακής (", pdValLab, "% διάστημα πρόβλεψης)", sep=""), "Επιφυλακή", "Ειδοποίηση"))
+            paste("Όριο ειδοποίησης (", pdValLab, "% διάστημα πρόβλεψης)", sep=""), "Ειδοποίηση", "Εγρήγορση"))
     
     if (legend) {
         legend("bottomleft", legend=legendtxt[[lang]][1:3], lwd=lwd, 
             lty=c("solid", "dashed", "dashed"), col=c("black","blue","red"), 
-            inset=c(0.12,legend.y), bty="n", seg.len=4, xpd=TRUE)
+            inset=c(0.06,legend.y), bty="n", seg.len=4, xpd=TRUE)
         legend("bottomright", legend=legendtxt[[lang]][4:6], pch=c(19,17,NA), col=c("blue","red"), 
-            inset=c(0.25,legend.y), bty="n", seg.len=4, xpd=TRUE)
+            inset=c(0.12,legend.y), bty="n", seg.len=4, xpd=TRUE)
     }
 
+    options("OutDec"=".")
 }
 
 
@@ -216,6 +238,8 @@ plotAges <- function(syndrome, camp=NA, ymax=NA, lang="EN", legend=TRUE, goback=
     a$pa <- a$na/a$visa
     a$pb <- a$nb/a$visb
     a$pc <- a$nc/a$visc
+    
+    if (lang=="GR") options("OutDec"=",")
     
     # Determine time window
     xlim <- nrow(a) - c(goback,0)
@@ -269,8 +293,8 @@ plotAges <- function(syndrome, camp=NA, ymax=NA, lang="EN", legend=TRUE, goback=
     #mtext(title[lang], side=3, line=1, cex=1.2, col="blue")
     
     legendtxt <- list(
-        "EN" = c("Age 0-4", "Agr 5-17", "Age 18+", "Alert", "Warning"),
-        "GR" = c("0-4 ετών", "5-17 ετών", "18+ ετών", "Επιφυλακή", "Ειδοποίηση"))
+        "EN" = c("Age 0-4", "Agr 5-17", "Age 18+", "Warning", "Alert"),
+        "GR" = c("0-4 ετών", "5-17 ετών", "18+ ετών", "Ειδοποίηση", "Εγρήγορση"))
     
     if (legend) {
         legend("bottomleft", legend=legendtxt[[lang]][1:3], lwd=2, 
@@ -280,6 +304,7 @@ plotAges <- function(syndrome, camp=NA, ymax=NA, lang="EN", legend=TRUE, goback=
             inset=c(0.25,-0.65), bty="n", seg.len=4, xpd=TRUE)
     }
 
+    options("OutDec"=".")
 }
 
 

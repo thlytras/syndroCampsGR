@@ -1,3 +1,7 @@
+# Προσοχή: στον κώδικα έχουμε alert & alarm.
+# Οι αντίστοιχες διατυπώσεις στην αναφορά είναι warning & alert !!!
+# (Στα ελληνικά, ειδοποίηση & εγρήγορση)
+
 library(odfWeave)
 
 styleDefs <- getStyleDefs()
@@ -49,16 +53,16 @@ tgtdatef2 <- format(tgtdate, "%Y%m%d")
 
 
 noAlertMsg <- data.frame(
-    EN=c("*** There are no across-camp alerts today ***", 
-        "*** There are no camp-specific alerts today ***",
-        "*** There are no across-camp alerts for the past 7 days ***",
-        "*** There are no camp-specific alerts for the past 7 days ***",
-        "*** There are no alerts today ***"),
-    GR=c("*** Δεν υπάρχει σήμα επιφυλακής για κανένα σύνδρομο σήμερα ***",
-        "*** Δεν υπάρχει σήμα επιφυλακής από κανένα κέντρο σήμερα ***",
-        "*** Δεν υπάρχει σήμα επιφυλακής για κανένα σύνδρομο τις τελευταίες 7 ημέρες ***",
-        "*** Δεν υπάρχει σήμα επιφυλακής από κανένα κέντρο τις τελευταίες 7 ημέρες ***",
-        "*** Δεν υπάρχει κανένα σήμα επιφυλακής σήμερα ***"))
+    EN=c("*** There are no across-camp warnings today ***", 
+        "*** There are no camp-specific warnings today ***",
+        "*** There are no across-camp warnings for the past 7 days ***",
+        "*** There are no camp-specific warnings for the past 7 days ***",
+        "*** There are no warnings today ***"),
+    GR=c("*** Δεν υπάρχουν ειδοποιήσεις για κανένα σύνδρομο σήμερα ***",
+        "*** Δεν υπάρχουν ειδοποιήσεις από κανένα κέντρο σήμερα ***",
+        "*** Δεν υπάρχουν ειδοποιήσεις για κανένα σύνδρομο τις τελευταίες 7 ημέρες ***",
+        "*** Δεν υπάρχουν ειδοποιήσεις από κανένα κέντρο τις τελευταίες 7 ημέρες ***",
+        "*** Δεν υπάρχει καμμία ειδοποίηση σήμερα ***"))
 alDayLabels <-data.frame(
     EN=c("Graph %s: Proportional morbidity of %s, based on reports from all camps",
         "Graph %s: Proportional morbidity of %s, based on reports from camp %s - %s"),
@@ -73,9 +77,9 @@ Ncamps7 <- length(unique(subset(aggrD, hmedil>=tgtdate-7)$codecamp))
 
 makeTable1 <- function(lang, wkly=FALSE) {
     if (wkly) {
-        table1 <- do.call("rbind", lapply(1:14, function(i) subset(fits[[i]], dates==tgtdate-1)))
-    } else {
         table1 <- do.call("rbind", lapply(1:14, function(i) subset(fitsW[[i]], weeks==tgtweek)))
+    } else {
+        table1 <- do.call("rbind", lapply(1:14, function(i) subset(fits[[i]], dates==tgtdate-1)))
     }
     rownames(table1) <- NULL
     if(nrow(table1)==0) stop(sprintf("ΣΦΑΛΜΑ: Δεν υπάρχει ούτε μια δήλωση για τις %s.\n Μήπως το αρχείο εισόδου είναι παλιό??", tgtdate-1))
@@ -89,9 +93,9 @@ makeTable1 <- function(lang, wkly=FALSE) {
     table1 <- table1[,c("syndrome", "x", "p", "pexp", "zscore", "alerts", "alarms")]
     colnames(table1) <- list(
         EN = c("Syndrome", "No of cases", "Obs. prop. morbidity", 
-            "Exp. prop. morbidity", "Z-score", "Alert", "Alarm"),
+            "Exp. prop. morbidity", "Z-score*", "Warning", "Alert"),
         GR = c("Σύνδρομο", "αρ. περιστατικών", "Παρατηρούμενη αναλ. νοσηρότητα", 
-            "Αναμενόμενη αναλ. νοσηρότητα", "Z-score", "Επιφυλακή", "Ειδοποίηση"))[[lang]]
+            "Αναμενόμενη αναλ. νοσηρότητα", "Z-score*", "Ειδοποίηση", "Εγρήγορση"))[[lang]]
     table1
 }
 
@@ -220,13 +224,13 @@ makePNG <- function(lang="EN") {
         dir.create(sprintf("output/daily/%s/%s/%s", tgtdatef2, lang, x), showWarnings=FALSE)
         for (i in 1:14) {
             png(sprintf("output/daily/%s/%s/%s/camp%s-%s-%s.png", tgtdatef2, lang, x, x, i, tgtdatef2), width=3800, height=2200, res=400)
-            plotOne(fitsD[[x]][[i]], lang=lang)
+            plotOne(fitsD[[x]][[i]], lang=lang, stoptgt=TRUE)
             dev.off()
         }
     }
     for (i in 1:14) {
         png(sprintf("output/daily/%s/%s/allcamps-%s-%s.png", tgtdatef2, lang, i, tgtdatef2), width=3800, height=2200, res=400)
-        plotOne(fits[[i]], lang=lang)
+        plotOne(fits[[i]], lang=lang, stoptgt=TRUE)
         dev.off()
     }
 }
@@ -242,7 +246,7 @@ for (lang in c("EN", "GR")) {
         par(oma=c(15,15,25,15), mfrow=c(7,2))
         for (i in 1:14) {
             plotOne(fitsD[[x]][[i]], lwd=1, mar=c(12,10,2,5), legend.y=-0.5, 
-                main=c(EN="", GR=""), title=syndroDescList[[i]], lang=lang)
+                main=c(EN="", GR=""), title=syndroDescList[[i]], lang=lang, stoptgt=TRUE)
         }
         mtext(sprintf("%s %s: %s", c("EN"="Camp", "GR"="Κέντρο")[lang], x, camps[match(x, camps$codecamp), lang]), 
                 side=3, cex=4.5, outer=TRUE, line=14)
@@ -255,7 +259,7 @@ for (lang in c("EN", "GR")) {
     par(oma=c(15,15,25,15), mfrow=c(7,2))
     for (i in 1:14) {
         plotOne(fits[[i]], lwd=1, mar=c(12,10,2,5), legend.y=-0.5, 
-            main=c(EN="", GR=""), title=syndroDescList[[i]], lang=lang)
+            main=c(EN="", GR=""), title=syndroDescList[[i]], lang=lang, stoptgt=TRUE)
     }
     mtext(c("EN"="Daily report from all camps", "GR"="Ημερήσια αναφορά από όλα τα κέντρα")[lang], 
             side=3, cex=4.5, outer=TRUE, line=14)
