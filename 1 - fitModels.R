@@ -176,6 +176,7 @@ plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkl
     with(fit, plot(0, type="n", bty="l", 
                 ylim=c(-ymax/15,ymax), xlim=xlim[c(1,3)], 
                 xlab=xlab[lang], ylab=ylab[lang], xaxt="n", yaxt="n"))
+    #mtext(ylab[lang], side=2, line=3, xpd=TRUE)
     if (wkly) {
         axis1lab <- (min(fit$weeks):(max(fit$weeks)+2))[xlim[1]:xlim[3]]
         axis1lab <- paste(axis1lab%/%100, axis1lab%%100, sep="-")

@@ -3,6 +3,8 @@
 # (Στα ελληνικά, ειδοποίηση & εγρήγορση)
 
 library(odfWeave)
+library(WriteXLS)
+library(gplots)
 
 styleDefs <- getStyleDefs()
 
@@ -69,6 +71,11 @@ alDayLabels <-data.frame(
     GR=c("Διάγραμμα %s: Αναλογική νοσηρότητα για %s, βάσει δηλώσεων από το σύνολο των κέντρων",
         "Διάγραμμα %s: Αναλογική νοσηρότητα για %s, βάσει δηλώσεων από το κέντρο %s - %s"),
     stringsAsFactors=FALSE)
+syndroShort <- c("1 - RespInf w Fever", "2 - Gastroenteritis NO blood", "3 - Bloody diarrhoea",
+        "4 - Rash w Fever", "5 - susp scabies", "6 - susp pulm TB", "7 - Malaria pos RDT",
+        "8 - susp diphtheria", "9 - Jaundice acute onset", "10 - Neuro acute onset",
+        "11 - Meningitis Encephalitis", "12 - Hemorragic w fever", "13 - Sepsis or shock", 
+        "14 - Death unknown cause")
 
 
 Ncamps1 <- length(unique(subset(aggrD, hmedil==tgtdate-1)$codecamp))
@@ -187,15 +194,95 @@ formatTableB <- function(tb, lang="EN") {
 }
 
 
+syndroPerCamp <- function(date, syndro) {
+    res <- do.call("rbind", lapply(1:length(fitsD), function(j){
+        res2 <- subset(fitsD[[j]][[syndro]], dates==date)
+        if (nrow(res2)>0) {
+            res2$camp <- names(fitsD)[j]
+            res2$syndro <- syndro
+        }
+        res2
+    }))
+}
+
+
+detailsPerCamp <- lapply(1:14, function(i) {
+    formatTableB(syndroPerCamp(tgtdate-1, i), lang)
+})
+
+
+plotReport <- function(camp, tgtdate, filename, lang) {
+    if (camp=="") {
+        fts <- fits
+    } else {
+        fts <- fitsD[[camp]]
+    }
+    plotRow <- function(i, legend.y=-1, mar=c(12,5,2,2)) {
+        plotOne(fts[[i]], lwd=1, mar=mar, legend.y=legend.y, 
+            main=c(EN="", GR=""), title=syndroDescList[[i]], lang=lang, stoptgt=TRUE)
+        
+        a <- tail(subset(fts[[i]], dates<tgtdate), 7)
+        rownames(a) <- fmtDate(a$dates, lang)
+        a <- a[,c("x","n","p","zscore","alerts", "alarms")]
+        a$p <- round(a$p*100, 1)
+        a$zscore <- round(a$zscore, 3)
+        a$alerts[a$alerts==0] <- "-"; a$alerts[a$alerts==1] <- "NAI"
+        a$alarms[a$alarms==0] <- "-"; a$alarms[a$alarms==1] <- "NAI"
+        colnames(a) <- list(
+            EN=c("Number of cases", "Total visits", "Proportion (%)", "Z-score", "Warning", "Alert"),
+            GR=c("Αρ. περιστατικών", "Αρ. επισκέψεων", "Αναλογία (%)", "Z-score", "Ειδοποίηση", "Εγρήγορση"))[[lang]]
+        par(mar=c(0,0,0,0), family="Fira Sans")
+        textplot(t(a), valign="top", rmar=1.5, cmar=0.8)
+        mtext(c(EN="Details for the past 7 days", GR="Λεπτομέρειες για τις τελευταίες 7 ημέρες")[lang], 
+                side=3, line=-3)
+    }
+    plotFooter <- function() {
+        mtext(c("EN"="Source: Hellenic Centre of Disease Control and Prevention (KEELPNO)", 
+                "GR"="Πηγή: Κέντρο Ελέγχου και Πρόληψης Νοσημάτων (ΚΕΕΛΠΝΟ)")[lang], 
+                side=1, cex=1.2, outer=TRUE, adj=1, line=2, font=3)
+        mtext("__________________________", side=1, outer=TRUE, adj=1)
+    }
+    cairo_pdf(filename, width=21/2.54, height=29.7/2.54, pointsize=8, onefile=TRUE)
+    par(oma=c(10,7,18,7), mfrow=c(4,2))
+    for (i in 1:4) plotRow(i, -0.7)
+    if (camp=="") {
+        mtext(c("EN"="Daily report from all camps", "GR"="Ημερήσια αναφορά από όλα τα κέντρα")[lang], 
+            side=3, cex=2.8, outer=TRUE, line=9, adj=0)
+    } else {
+        mtext(sprintf("%s %s: %s", c("EN"="Camp", "GR"="Κέντρο")[lang], camp, camps[match(x, camps$codecamp), lang]), side=3, cex=2.8, outer=TRUE, line=9, adj=0)
+    }
+    mtext(sprintf("%s: %s", c("EN"="Date", "GR"="Ημερομηνία")[lang], tgtdate), 
+            side=3, cex=2, outer=TRUE, line=5, adj=0)
+    plotFooter()
+
+    par(oma=c(10,7,12,7), mfrow=c(5,2))
+    for (i in 5:9) plotRow(i, mar=c(12,5,2,2))
+    mtext(sprintf("%s: %s", c("EN"="Date", "GR"="Ημερομηνία")[lang], tgtdate), 
+            side=3, cex=2, outer=TRUE, line=5, adj=0)
+    plotFooter()
+    
+    par(oma=c(10,7,12,7), mfrow=c(5,2))
+    for (i in 10:14) plotRow(i, mar=c(12,5,2,2))
+       mtext(sprintf("%s: %s", c("EN"="Date", "GR"="Ημερομηνία")[lang], tgtdate), 
+            side=3, cex=2, outer=TRUE, line=5, adj=0)
+    plotFooter()
+
+    dev.off()
+}
+
+
+
 dir.create("output", showWarnings=FALSE)
 dir.create("output/daily", showWarnings=FALSE)
 dir.create(sprintf("output/daily/%s", tgtdatef2), showWarnings=FALSE)
 
 cat("Φτιάχνω τις αναφορές (σε δύο γλώσσες)...\n")
 lang <- "EN"
-odfWeave("input/daily-en-template.odt", paste("output/daily/", tgtdatef2, "/daily-en-", tgtdatef2, ".odt", sep=""))
+odfWeave("input/daily-en-template.odt", sprintf("output/daily/%s/daily-en-%s.odt", tgtdatef2, tgtdatef2))
+WriteXLS("detailsPerCamp", sprintf("output/daily/%s/syndroDetails-en-%s.xls", tgtdatef2, tgtdatef2), SheetNames=syndroShort, FreezeRow=1)
 lang <- "GR"
-odfWeave("input/daily-gr-template.odt", paste("output/daily/", tgtdatef2, "/daily-gr-", tgtdatef2, ".odt", sep=""))
+odfWeave("input/daily-gr-template.odt", sprintf("output/daily/%s/daily-gr-%s.odt", tgtdatef2, tgtdatef2))
+WriteXLS("detailsPerCamp", sprintf("output/daily/%s/syndroDetails-gr-%s.xls", tgtdatef2, tgtdatef2), SheetNames=syndroShort, FreezeRow=1)
 
 
 if (tgtweek>0) {
@@ -241,31 +328,9 @@ for (lang in c("EN", "GR")) {
     # Setting up directories
     dir.create(sprintf("output/daily/%s/%s", tgtdatef2, lang), showWarnings=FALSE)
     for (x in camps$codecamp) {
-        cairo_pdf(sprintf("output/daily/%s/%s/report%s-%s-%s.pdf", tgtdatef2, lang, lang, x, tgtdatef2), 
-                width=21/2.54, height=29.7/2.54, pointsize=4)
-        par(oma=c(15,15,25,15), mfrow=c(7,2))
-        for (i in 1:14) {
-            plotOne(fitsD[[x]][[i]], lwd=1, mar=c(12,10,2,5), legend.y=-0.5, 
-                main=c(EN="", GR=""), title=syndroDescList[[i]], lang=lang, stoptgt=TRUE)
-        }
-        mtext(sprintf("%s %s: %s", c("EN"="Camp", "GR"="Κέντρο")[lang], x, camps[match(x, camps$codecamp), lang]), 
-                side=3, cex=4.5, outer=TRUE, line=14)
-        mtext(sprintf("%s: %s", c("EN"="Date", "GR"="Ημερομηνία")[lang], tgtdate), 
-                side=3, cex=3.5, outer=TRUE, line=8)
-        dev.off()
+        plotReport(x, tgtdate, sprintf("output/daily/%s/%s/report%s-%s-%s.pdf", tgtdatef2, lang, lang, x, tgtdatef2), lang)
     }
-    cairo_pdf(sprintf("output/daily/%s/%s/report%s-All-%s.pdf", tgtdatef2, lang, lang, tgtdatef2), 
-            width=21/2.54, height=29.7/2.54, pointsize=4)
-    par(oma=c(15,15,25,15), mfrow=c(7,2))
-    for (i in 1:14) {
-        plotOne(fits[[i]], lwd=1, mar=c(12,10,2,5), legend.y=-0.5, 
-            main=c(EN="", GR=""), title=syndroDescList[[i]], lang=lang, stoptgt=TRUE)
-    }
-    mtext(c("EN"="Daily report from all camps", "GR"="Ημερήσια αναφορά από όλα τα κέντρα")[lang], 
-            side=3, cex=4.5, outer=TRUE, line=14)
-    mtext(sprintf("%s: %s", c("EN"="Date", "GR"="Ημερομηνία")[lang], tgtdate), 
-            side=3, cex=3.5, outer=TRUE, line=8)
-    dev.off()
+    plotReport("", tgtdate, sprintf("output/daily/%s/%s/report%s-All-%s.pdf", tgtdatef2, lang, lang, tgtdatef2), lang)
     
     a <- formatTableA(AllAlerts, lang=lang); a <- a[order(a[,4], a[,1], a[,2]),]
     write.csv2(a, file=sprintf("output/daily/%s/%s/AlertsAllCamps%s-%s.csv", tgtdatef2, lang, lang, tgtdatef2), row.names=FALSE, na="")
