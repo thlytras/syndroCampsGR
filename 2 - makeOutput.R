@@ -29,11 +29,18 @@ styleDefs$MySmall <- styleDefs$ArialNormal
 styleDefs$MySmall$fontName <- "Fira Sans"
 styleDefs$MySmall$fontSize <- "9pt"
 
+styleDefs$MyXSmall <- styleDefs$ArialNormal
+styleDefs$MyXSmall$fontName <- "Fira Sans"
+styleDefs$MyXSmall$fontSize <- "8pt"
+
 styleDefs$MyCenteredNormal <- styleDefs$MyNormal
 styleDefs$MyCenteredNormal$textAlign <- "center"
 
 styleDefs$MyCenteredSmall <- styleDefs$MySmall
 styleDefs$MyCenteredSmall$textAlign <- "center"
+
+styleDefs$MyCenteredXSmall <- styleDefs$MyXSmall
+styleDefs$MyCenteredXSmall$textAlign <- "center"
 
 setStyleDefs(styleDefs)
 
@@ -66,9 +73,9 @@ noAlertMsg <- data.frame(
         "*** Δεν υπάρχουν ειδοποιήσεις από κανένα κέντρο τις τελευταίες 7 ημέρες ***",
         "*** Δεν υπάρχει καμμία ειδοποίηση σήμερα ***"))
 alDayLabels <-data.frame(
-    EN=c("Graph %s: Proportional morbidity of %s, based on reports from all camps",
+    EN=c("Graph %s: Proportional morbidity of %s, based on reports from all camps in Greece",
         "Graph %s: Proportional morbidity of %s, based on reports from camp %s - %s"),
-    GR=c("Διάγραμμα %s: Αναλογική νοσηρότητα για %s, βάσει δηλώσεων από το σύνολο των κέντρων",
+    GR=c("Διάγραμμα %s: Αναλογική νοσηρότητα για %s, βάσει δηλώσεων από το σύνολο των κέντρων της χώρας",
         "Διάγραμμα %s: Αναλογική νοσηρότητα για %s, βάσει δηλώσεων από το κέντρο %s - %s"),
     stringsAsFactors=FALSE)
 syndroShort <- c("1 - RespInf w Fever", "2 - Gastroenteritis NO blood", "3 - Bloody diarrhoea",
@@ -90,7 +97,7 @@ makeTable1 <- function(lang, wkly=FALSE) {
     }
     rownames(table1) <- NULL
     if(nrow(table1)==0) stop(sprintf("ΣΦΑΛΜΑ: Δεν υπάρχει ούτε μια δήλωση για τις %s.\n Μήπως το αρχείο εισόδου είναι παλιό??", tgtdate-1))
-    table1$syndrome <- syndroDesc[,lang]
+    table1$syndrome <- paste("[", 1:14, "] ", syndroDesc[,lang], sep="")
     table1$pexp <- with(table1, Pnb/n)
     table1$p <- round(table1$p*100, 1)
     table1$pexp <- round(table1$pexp*100, 1)
@@ -100,9 +107,9 @@ makeTable1 <- function(lang, wkly=FALSE) {
     table1 <- table1[,c("syndrome", "x", "p", "pexp", "zscore", "alerts", "alarms")]
     colnames(table1) <- list(
         EN = c("Syndrome", "No of cases", "Obs. prop. morbidity", 
-            "Exp. prop. morbidity", "Z-score*", "Warning", "Alert"),
-        GR = c("Σύνδρομο", "αρ. περιστατικών", "Παρατηρούμενη αναλ. νοσηρότητα", 
-            "Αναμενόμενη αναλ. νοσηρότητα", "Z-score*", "Ειδοποίηση", "Εγρήγορση"))[[lang]]
+            "Exp. prop. morbidity", "Z-score", "Warning", "Alert"),
+        GR = c("Σύνδρομο/κατάσταση υγείας", "Αριθμός επισκέψεων", "Παρατηρούμενη αναλογική νοσηρότητα (%)", 
+            "Αναμενόμενη αναλογική νοσηρότητα (%)", "Z-score", "Σήμα ειδοποίησης", "Σήμα εγρήγορσης"))[[lang]]
     table1
 }
 
