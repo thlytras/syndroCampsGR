@@ -3,6 +3,8 @@ library(splines)
 
 load("./output/latest_fits.RData")
 
+na0 <- function(x) { x[is.na(x)] <- 0; x }
+
 plotAll <- function(fit, ymax=NA, title=NA, lang="EN", goback=28, plottype="l", pdValLab=97.5) {
     # Determine time window
     xlim <- nrow(fit) - c(goback,0)
@@ -13,18 +15,14 @@ plotAll <- function(fit, ymax=NA, title=NA, lang="EN", goback=28, plottype="l", 
     mondays <- mondays[mondays>=xlim[1]]
     
 
-    fit$rollx <- c(rep(NA,7), rollsum(fit$x, 7)[-nrow(fit)+6])
-    fit$rolln <- c(rep(NA,7), rollsum(fit$n, 7)[-nrow(fit)+6])
+    fit$rollx <- c(rep(NA,7), rollsum(na0(fit$x), 7)[-nrow(fit)+6])
+    fit$rolln <- c(rep(NA,7), rollsum(na0(fit$n), 7)[-nrow(fit)+6])
     fit$pexp <- with(fit, rollx/rolln)
-    fit$rollpmean <- c(rep(NA,7), rollapply(fit$p, 7, mean)[-nrow(fit)+6])
-    fit$rollpsd <- c(rep(NA,7), rollapply(fit$p, 7, sd)[-nrow(fit)+6])
+    fit$rollpmean <- c(rep(NA,7), rollapply(fit$p, 7, mean, na.rm=TRUE)[-nrow(fit)+6])
+    fit$rollpsd <- c(rep(NA,7), rollapply(fit$p, 7, sd, na.rm=TRUE)[-nrow(fit)+6])
     
     fit$uci <- c(rep(NA,7), qbinom(0.975, fit$n[-(1:7)], fit$pexp[-(1:7)])/fit$n[-(1:7)])
     fit$lci <- c(rep(NA,7), qbinom(0.025, fit$n[-(1:7)], fit$pexp[-(1:7)])/fit$n[-(1:7)])
-
-    fit$rollpmean <- c(rep(NA,7), rollapply(fit$p, 7, mean)[-nrow(fit)+6])
-    fit$rollpsd <- c(rep(NA,7), rollapply(fit$p, 7, sd)[-nrow(fit)+6])
-
 
     
     xlab <- c("EN" = "Date", "GR" = "Ημερομηνία")
