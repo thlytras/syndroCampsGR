@@ -147,7 +147,7 @@ plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkl
     if (lang=="GR") options("OutDec"=",")
     
     if (!wkly){
-        dates <- c(fit$dates, seq(fit$dates[nrow(fit)], length.out=7, by=1))
+        dates <- c(fit$dates, seq(fit$dates[nrow(fit)], length.out=8, by=1)[-1])
         mondays <- which(format(dates, "%w")==1)
         mondays <- mondays[mondays>=xlim[1]]
     }

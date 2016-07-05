@@ -218,12 +218,6 @@ detailsPerCamp <- lapply(1:14, function(i) {
 })
 
 
-casetab <- subset(aggrD, isoweek(hmedil, "both_num")==tgtweek)
-casetab <- aggregate(casetab[,c(paste("n",1:5,"sum",sep=""), paste("n",6:14,sep=""))], by=list(casetab$codecamp), sum, na.rm=TRUE)
-casetab[,1] <- paste(casetab[,1], "-", camps$GR[match(casetab[,1], camps$codecamp)])
-colnames(casetab) <- c("Κέντρο", paste(1:14, "-", syndroDesc$GR))
-
-
 plotReport <- function(camp, tgtdate, filename, lang) {
     if (camp=="") {
         fts <- fits
@@ -303,14 +297,21 @@ if (tgtweek>0) {
     dir.create("output/weekly", showWarnings=FALSE)
     dir.create(sprintf("output/weekly/%s", tgtweek), showWarnings=FALSE)
 
+    casetab <- subset(aggrD, isoweek(hmedil, "both_num")==tgtweek)
+    casetab <- aggregate(casetab[,c(paste("n",1:5,"sum",sep=""), paste("n",6:14,sep=""))], by=list(casetab$codecamp), sum, na.rm=TRUE)
+    casetab[,1] <- paste(casetab[,1], "-", camps$GR[match(casetab[,1], camps$codecamp)])
+    colnames(casetab) <- c("Κέντρο", paste(1:14, "-", syndroDesc$GR))
+    
     NcampsW <- length(unique(subset(aggrD, isoweek(hmedil, "both_num")==tgtweek)$codecamp))
     tgtweekR <- paste(format(isoweekStart(tgtweek), "%d/%m"), c(EN="to", GR="έως")[lang], format(isoweekStart(tgtweek)+6, "%d/%m"))
     
     cat("Φτιάχνω τις εβδομαδιαίες αναφορές (σε δύο γλώσσες)...\n")
+    tgtdate.bak <- tgtdate; tgtdate <- isoweekStart(tgtweek)+7
     #lang <- "EN"
     #odfWeave("input/weekly-en-template.odt", paste("output/weekly/", tgtweek, "/weekly-en-", tgtweek, ".odt", sep=""))
     lang <- "GR"
     odfWeave("input/weekly-gr-template.odt", paste("output/weekly/", tgtweek, "/weekly-gr-", tgtweek, ".odt", sep=""))
+    tgtdate <- tgtdate.bak; rm(tgtdate.bak)
     
     odfWeave("input/weekly-gr-casecount.odt", paste("output/weekly/", tgtweek, "/weekly-gr-casecount-", tgtweek, ".odt", sep=""))
 }
