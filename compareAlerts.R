@@ -5,7 +5,7 @@ load("./output/latest_fits.RData")
 
 na0 <- function(x) { x[is.na(x)] <- 0; x }
 
-a <- do.call("rbind", lapply(1:6, function(i){
+a <- do.call("rbind", lapply(c(1:6,9), function(i){
     fit <- fits[[i]]
     if (nrow(fit)<7) {
         res <- subset(fit, alerts==1)
@@ -36,7 +36,7 @@ a <- a[,c(1,8,2:7)]
 
 
 b <- do.call("rbind", lapply(1:length(fitsD), function(j) 
-    do.call("rbind", lapply(1:6, function(i){
+    do.call("rbind", lapply(c(1:6,9), function(i){
     fit <- fitsD[[j]][[i]]
     if (nrow(fit)<7) {
         res <- subset(fit, alerts==1)
