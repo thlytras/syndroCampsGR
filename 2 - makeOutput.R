@@ -58,6 +58,7 @@ if (!exists("fits")) load("output/latest_fits.RData")
 if (!exists("tgtdate")) stop("\nERROR: No target date selected!\nPut the target date on an object named 'tgtdate' to continue...\n")
 
 tgtdatef <- format(tgtdate, "%d-%m-%Y")
+tgtdatef1 <- format(tgtdate-1, "%d-%m-%Y")
 tgtdatef2 <- format(tgtdate, "%Y%m%d")
 
 
