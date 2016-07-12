@@ -111,6 +111,7 @@ makeTable1 <- function(lang, wkly=FALSE) {
             "Exp. prop. morbidity", "Z-score", "Warning", "Alert"),
         GR = c("Σύνδρομο/κατάσταση υγείας", "Αριθμός επισκέψεων", "Παρατηρούμενη αναλογική νοσηρότητα (%)", 
             "Αναμενόμενη αναλογική νοσηρότητα (%)", "Z-score", "Σήμα ειδοποίησης", "Σήμα εγρήγορσης"))[[lang]]
+    if (wkly) table1 <- table1[,1:5]
     table1
 }
 
