@@ -23,6 +23,7 @@ dat$campname <- str_trim(dat$campname)
 
 dat <- subset(dat, hmedil<tgtdate)
 dat <- subset(dat, hmedil>="2016-5-16")
+dat <- subset(dat, !is.na(vissum))
 
 camps <- data.frame(codecamp = unique(dat$codecamp),
     EN = sapply(unique(dat$codecamp), function(x)rev(dat$campname[dat$codecamp==x])[1]),
