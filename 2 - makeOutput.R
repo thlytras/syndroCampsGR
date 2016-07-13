@@ -215,8 +215,11 @@ syndroPerCamp <- function(date, syndro) {
 }
 
 
-detailsPerCamp <- lapply(1:14, function(i) {
-    formatTableB(syndroPerCamp(tgtdate-1, i), lang)
+detailsPerCampGR <- lapply(1:14, function(i) {
+    formatTableB(syndroPerCamp(tgtdate-1, i), "GR")
+})
+detailsPerCampEN <- lapply(1:14, function(i) {
+    formatTableB(syndroPerCamp(tgtdate-1, i), "EN")
 })
 
 
@@ -288,10 +291,10 @@ dir.create(sprintf("output/daily/%s", tgtdatef2), showWarnings=FALSE)
 cat("Φτιάχνω τις αναφορές (σε δύο γλώσσες)...\n")
 lang <- "EN"
 odfWeave("input/daily-en-template.odt", sprintf("output/daily/%s/daily-en-%s.odt", tgtdatef2, tgtdatef2))
-WriteXLS("detailsPerCamp", sprintf("output/daily/%s/syndroDetails-en-%s.xls", tgtdatef2, tgtdatef2), SheetNames=syndroShort, FreezeRow=1)
+WriteXLS("detailsPerCampEN", sprintf("output/daily/%s/syndroDetails-en-%s.xls", tgtdatef2, tgtdatef2), SheetNames=syndroShort, FreezeRow=1)
 lang <- "GR"
 odfWeave("input/daily-gr-template.odt", sprintf("output/daily/%s/daily-gr-%s.odt", tgtdatef2, tgtdatef2))
-WriteXLS("detailsPerCamp", sprintf("output/daily/%s/syndroDetails-gr-%s.xls", tgtdatef2, tgtdatef2), SheetNames=syndroShort, FreezeRow=1)
+WriteXLS("detailsPerCampGR", sprintf("output/daily/%s/syndroDetails-gr-%s.xls", tgtdatef2, tgtdatef2), SheetNames=syndroShort, FreezeRow=1)
 
 
 if (tgtweek>0) {
