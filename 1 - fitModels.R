@@ -200,10 +200,10 @@ plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkl
                 type=plottype, cex=0.6, col="black", lwd=lwd, lty="solid"))
     
     alerts <- which(fit$alerts==1)
-    alerts <- alerts[alerts>=xlim[1]]
+    alerts <- alerts[alerts>=xlim[1] & alerts<=xlim[2]]
     points(y=rep(-ymax/15*0.5, length(alerts)), x=alerts, col="blue", pch=19)
     alarms <- which(fit$alarms==1)
-    alarms <- alarms[alarms>=xlim[1]]
+    alarms <- alarms[alarms>=xlim[1] & alarms<=xlim[2]]
     points(y=rep(-ymax/15*0.9, length(alarms)), x=alarms, col="red", pch=17)
 
     mtext(main[lang], side=3, line=2, cex=1.2)
