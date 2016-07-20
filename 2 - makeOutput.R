@@ -312,11 +312,12 @@ if (tgtweek>0) {
     
     NcampsW <- length(unique(subset(aggrD, isoweek(hmedil, "both_num")==tgtweek)$codecamp))
     tgtweekR <- paste(format(isoweekStart(tgtweek), "%d/%m"), c(EN="to", GR="έως")[lang], format(isoweekStart(tgtweek)+6, "%d/%m"))
+    tgtweekR.en <- paste(format(isoweekStart(tgtweek), "%d/%m"), c(EN="to", GR="έως")["EN"], format(isoweekStart(tgtweek)+6, "%d/%m"))
     
     cat("Φτιάχνω τις εβδομαδιαίες αναφορές (σε δύο γλώσσες)...\n")
     tgtdate.bak <- tgtdate; tgtdate <- isoweekStart(tgtweek)+7
-    #lang <- "EN"
-    #odfWeave("input/weekly-en-template.odt", paste("output/weekly/", tgtweek, "/weekly-en-", tgtweek, ".odt", sep=""))
+    lang <- "EN"
+    odfWeave("input/weekly-en-template.odt", paste("output/weekly/", tgtweek, "/weekly-en-", tgtweek, ".odt", sep=""))
     lang <- "GR"
     odfWeave("input/weekly-gr-template.odt", paste("output/weekly/", tgtweek, "/weekly-gr-", tgtweek, ".odt", sep=""))
     tgtdate <- tgtdate.bak; rm(tgtdate.bak)
