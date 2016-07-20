@@ -28,11 +28,11 @@ a <- do.call("rbind", lapply(c(1:6,9), function(i){
     
     res <- subset(fit, alerts==1 | alerts3==1)
     if (nrow(res)>0) res <- cbind(res, syndro=i)
-}))[,c(21,1,2,3,4,10,20)]
+}))[,c(21,1,2,3,4,8,10,20)]
 
 a$syndro <- syndroDesc$GR[a$syndro]
 a$centre <- "Σύνολο κέντρων"
-a <- a[,c(1,8,2:7)]
+a <- a[,c(1,9,2:8)]
 
 
 b <- do.call("rbind", lapply(1:length(fitsD), function(j) 
@@ -60,7 +60,7 @@ b <- do.call("rbind", lapply(1:length(fitsD), function(j)
     res <- subset(fit, alerts==1 | alerts3==1)
     if (nrow(res)>0) res <- cbind(res, syndro=i, centre=j)
     return(res)
-}))))[,c(21,22,1,2,3,4,10,20)]
+}))))[,c(21,22,1,2,3,4,8,10,20)]
 
 b$syndro <- syndroDesc$GR[b$syndro]
 b$centre <- names(fitsD)[b$centre]
@@ -68,7 +68,7 @@ b$centre <- paste(b$centre, "-", camps$GR[match(b$centre, camps$codecamp)])
 
 ab <- rbind(a, b)
 
-colnames(ab) <- c("Σύνδρομο", "Κέντρο", "Ημ/νία", "Αρ.περιστατικών", "Σύνολο επισκέψεων", "Παρατηρ. αναλογική νοσηρότητα", "Alert (νέο)", "Alert (παλιό)")
+colnames(ab) <- c("Σύνδρομο", "Κέντρο", "Ημ/νία", "Αρ.περιστατικών", "Σύνολο επισκέψεων", "Παρατηρ. αναλογική νοσηρότητα", "Z-score", "Alert (νέο)", "Alert (παλιό)")
 
 write.csv2(ab, file="output/AlertsOldNew.csv", na="", row.names=FALSE)
 

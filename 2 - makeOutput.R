@@ -116,14 +116,16 @@ makeTable1 <- function(lang, wkly=FALSE) {
 }
 
 table2a <- do.call("rbind", lapply(1:14, function(i) {
-    res <- subset(fits[[i]], dates==tgtdate-1 & alerts==1)
+    d <- if (as.integer(format(tgtdate, "%w"))==1) 3 else 1
+    res <- subset(fits[[i]], dates==tgtdate-d & alerts==1)
     if (nrow(res)>0) res$syndro <- i
     res
 }))
 
 table2b <- do.call("rbind", lapply(1:length(fitsD), function(j){
     res2 <- do.call("rbind", lapply(1:14, function(i) {
-        res <- subset(fitsD[[j]][[i]], dates==tgtdate-1 & alerts==1)
+        d <- if (as.integer(format(tgtdate, "%w"))==1) 3 else 1
+        res <- subset(fitsD[[j]][[i]], dates==tgtdate-d & alerts==1)
         if (nrow(res)>0) res$syndro <- i
         res
     }))
@@ -306,6 +308,7 @@ if (tgtweek>0) {
     casetab <- aggregate(casetab[,c(paste("n",1:5,"sum",sep=""), paste("n",6:14,sep=""))], by=list(casetab$codecamp), sum, na.rm=TRUE)
     casetab[,1] <- paste(casetab[,1], "-", camps$GR[match(casetab[,1], camps$codecamp)])
     colnames(casetab) <- c("Κέντρο", paste(1:14, "-", syndroDesc$GR))
+    casetab <- rbind(casetab, c("Κέντρο"="Σύνολο", as.list(colSums(casetab[,-1]))))
     
     NcampsW <- length(unique(subset(aggrD, isoweek(hmedil, "both_num")==tgtweek)$codecamp))
     tgtweekR <- paste(format(isoweekStart(tgtweek), "%d/%m"), c(EN="to", GR="έως")[lang], format(isoweekStart(tgtweek)+6, "%d/%m"))
