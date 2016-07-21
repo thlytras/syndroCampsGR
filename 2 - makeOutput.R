@@ -16,10 +16,10 @@ styleDefs$RTable0$marginBottom <- "0"
 
 styleDefs$MyNormal <- styleDefs$ArialNormal
 styleDefs$MyNormal$fontName <- "Fira Sans"
-styleDefs$MyNormal$fontSize <- "11pt"
+styleDefs$MyNormal$fontSize <- "10pt"
 
 styleDefs$MyHeader <- styleDefs$MyNormal
-styleDefs$MyHeader$fontSize <- "12.1pt"
+styleDefs$MyHeader$fontSize <- "11pt" #"12.1pt"
 styleDefs$MyHeader$fontType <- "bold"
 styleDefs$MyHeader$spaceAfter <- "0.1in"
 styleDefs$MyHeader$marginBottom <- "0.1in"
@@ -107,8 +107,8 @@ makeTable1 <- function(lang, wkly=FALSE) {
     table1$alarms <- list(EN=c("no","yes"), GR=c("όχι","ναι"))[[lang]][table1$alarms+1]
     table1 <- table1[,c("syndrome", "x", "p", "pexp", "zscore", "alerts", "alarms")]
     colnames(table1) <- list(
-        EN = c("Syndrome", "No of cases", "Obs. prop. morbidity", 
-            "Exp. prop. morbidity", "Z-score", "Warning", "Alert"),
+        EN = c("Syndrome", "No of cases", "Observed proportional morbidity", 
+            "Expected proportional morbidity", "Z-score", "Warning", "Alert"),
         GR = c("Σύνδρομο/κατάσταση υγείας", "Αριθμός επισκέψεων", "Παρατηρούμενη αναλογική νοσηρότητα (%)", 
             "Αναμενόμενη αναλογική νοσηρότητα (%)", "Z-score", "Σήμα ειδοποίησης", "Σήμα εγρήγορσης"))[[lang]]
     if (wkly) table1 <- table1[,1:5]
@@ -178,7 +178,7 @@ formatTableA <- function(tb, lang="EN") {
     tb <- tb[,c("syndro", "dates", "x", "p", "pexp", "zscore")]
     colnames(tb) <- list(
         EN = c("Syndrome", "Reporting date", "No of cases", 
-            "Obs. prop. morbidity", "Exp. prop. morbidity", "Z-score"),
+            "Observed proportional morbidity", "Expected proportional morbidity", "Z-score"),
         GR = c("Σύνδρομο", "Ημ. δήλωσης", "αρ. περιστατικών", 
             "Παρατηρούμενη αναλ. νοσηρότητα", "Αναμενόμενη αναλ. νοσηρότητα", "Z-score"))[[lang]]
     tb
@@ -198,7 +198,7 @@ formatTableB <- function(tb, lang="EN") {
     tb <- tb[,c("syndro", "camp", "campname", "dates", "x", "p", "pexp", "zscore")]
     colnames(tb) <- list(
         EN = c("Syndrome", "Camp code", "Camp name", "Reporting date", "No of cases", 
-            "Obs. prop. morbidity", "Exp. prop. morbidity", "Z-score"),
+            "Observed proportional morbidity", "Expected proportional morbidity", "Z-score"),
         GR = c("Σύνδρομο", "Κωδικός κέντρου", "Όνομα κέντρου", "Ημ. δήλωσης", "αρ. περιστατικών", 
             "Παρατηρούμενη αναλ. νοσηρότητα", "Αναμενόμενη αναλ. νοσηρότητα", "Z-score"))[[lang]]
     tb

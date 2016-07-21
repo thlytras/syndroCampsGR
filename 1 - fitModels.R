@@ -135,7 +135,7 @@ plotOne <- function(fit, ymax=NA, main=NA, title=NA, lang="EN", legend=TRUE, wkl
         if (wkly) {
             a <- as.integer(fit$weeks - tgtweek)
         } else {
-            a <- as.integer(fit$dates - tgtdate)
+            a <- as.integer(fit$dates - (tgtdate-1))
         }
             a <- a[a<=0]
             xlimoffset <- which(abs(a)==min(abs(a))) - nrow(fit)
