@@ -117,7 +117,7 @@ makeTable1 <- function(lang, wkly=FALSE) {
 
 table2a <- do.call("rbind", lapply(1:14, function(i) {
     d <- if (as.integer(format(tgtdate, "%w"))==1) 3 else 1
-    res <- subset(fits[[i]], dates==tgtdate-d & alerts==1)
+    res <- subset(fits[[i]], dates>=tgtdate-d & alerts==1)
     if (nrow(res)>0) res$syndro <- i
     res
 }))
@@ -125,7 +125,7 @@ table2a <- do.call("rbind", lapply(1:14, function(i) {
 table2b <- do.call("rbind", lapply(1:length(fitsD), function(j){
     res2 <- do.call("rbind", lapply(1:14, function(i) {
         d <- if (as.integer(format(tgtdate, "%w"))==1) 3 else 1
-        res <- subset(fitsD[[j]][[i]], dates==tgtdate-d & alerts==1)
+        res <- subset(fitsD[[j]][[i]], dates>=tgtdate-d & alerts==1)
         if (nrow(res)>0) res$syndro <- i
         res
     }))
