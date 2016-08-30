@@ -150,14 +150,14 @@ table3b <- do.call("rbind", lapply(1:length(fitsD), function(j){
 }))
 
 AllAlerts <- do.call("rbind", lapply(1:14, function(i) {
-    res <- subset(fits[[i]], alerts==1)
+    res <- subset(fits[[i]], alerts==1 | (i>6 & x>0))
     if (nrow(res)>0) res$syndro <- i
     res
 }))
 
 AllAlertsD <- do.call("rbind", lapply(1:length(fitsD), function(j){
     res2 <- do.call("rbind", lapply(1:14, function(i) {
-        res <- subset(fitsD[[j]][[i]], alerts==1)
+        res <- subset(fitsD[[j]][[i]], alerts==1 | (i>6 & x>0))
         if (nrow(res)>0) res$syndro <- i
         res
     }))
