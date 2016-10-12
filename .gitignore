@@ -2,4 +2,7 @@ stack/
 output/
 input/KATAV1.rec
 go.R
+run.sh
+include.R
+syndro/latest_output.RData
 .Rproj.user
