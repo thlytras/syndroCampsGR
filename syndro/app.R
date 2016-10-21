@@ -39,10 +39,13 @@ server <- shinyServer(function(input, output) {
       tabPanel(c(EN="Plot", GR="Διάγραμμα")[lang], plotOutput("mainPlot")),
       tabPanel(c(EN="Table", GR="Πίνακας")[lang], 
                uiOutput("ui_mainTable"),
-               tableOutput("mainTable")),
+               tableOutput("mainTable"),
+               downloadButton("downloadMainTable", "Download"), br(), br()
+      ),
       tabPanel(c(EN="By camp", GR="Ανά κέντρο")[lang], 
                uiOutput("ui_campTable"),
-               tableOutput("campTable")
+               tableOutput("campTable"),
+               downloadButton("downloadCampTable", "Download"), br(), br()
       )
     )
     do.call(tabsetPanel, c(mytabs, id="mytbp"))
@@ -125,13 +128,7 @@ server <- shinyServer(function(input, output) {
   output$ui_mainTable <- renderUI({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
     if (!exists("input") || !("camp" %in% names(input))) return()
-    if (input$camp=="all") {
-      myfit <- subset(fits[[as.integer(input$syndrome)]], dates>=input$date_range[1] & dates<=input$date_range[2])
-      attr(myfit, "title") <- attr(fits[[as.integer(input$syndrome)]], "title")
-    } else {
-      myfit <- subset(fitsD[[input$camp]][[as.integer(input$syndrome)]], dates>=input$date_range[1] & dates<=input$date_range[2])
-      attr(myfit, "title") <- attr(fitsD[[input$camp]][[as.integer(input$syndrome)]], "title")
-    }
+    myfit <- getMainTable()
     if (input$camp=="all") {
       campstring <- c(EN="All camps. ", GR="Όλα τα κέντρα. ")[lang]
     } else {
@@ -143,15 +140,14 @@ server <- shinyServer(function(input, output) {
       format(input$date_range[1], "%d-%m-%Y"), 
       c(EN=" to ", GR=" έως ")[lang], 
       format(input$date_range[2], "%d-%m-%Y"), ":    ",
-      strong(sum(myfit$x, na.rm=TRUE)),
+      strong(sum(myfit[,2], na.rm=TRUE)),
       c(EN=" cases, ", GR=" περιστατικά, ")[lang], 
-      strong(sum(myfit$n, na.rm=TRUE)),
+      strong(sum(myfit[,3], na.rm=TRUE)),
       c(EN=" visits.", GR=" επισκέψεις.")[lang], 
       style="font-size:1.2em")
   })
-  
-  
-  output$mainTable <- renderTable({
+
+  getMainTable <- reactive({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
     if (!exists("input") || !("camp" %in% names(input))) return()
     if (input$camp=="all") {
@@ -168,13 +164,33 @@ server <- shinyServer(function(input, output) {
     myfit$alarms <- with(myfit, c("","NAI")[alarms+1])
     myfit$x <- as.integer(myfit$x)
     myfit$n <- as.integer(myfit$n)
-    myfit$p <- as.character(round(myfit$p, 1))
+    myfit$p <- as.character(round(myfit$p * 100, 1))
+    myfit$zscore <- round(myfit$zscore, 3)
     if (lang=="GR") {
       names(myfit) <- c("Ημ/νία", "Περιστατικά", "Σύνολο επισκέψεων", "Αναλογική νοσηρότητα (%)", "Z-score", "Ειδοποίηση", "Εγρήγορση")
     } else {
       names(myfit) <- c("Date", "Cases", "Total\nvisits", "Proportional\nmorbidity (%)", "Z-score", "Warning", "Alert")
     }
     return(myfit)
+  })
+  
+  
+  output$downloadMainTable <- downloadHandler(
+    filename = function() { 
+      paste("mainTable-", input$camp, "-", 
+            format(input$date_range[1], "%Y%m%d"), "-",
+            format(input$date_range[2], "%Y%m%d"), ".csv", sep="") 
+    },
+    content = function(file) {
+      out <- getMainTable()
+      out[,4] <- as.numeric(out[,4])
+      write.csv(out, file, row.names=FALSE, na="")
+    }
+  )
+  
+  
+  output$mainTable <- renderTable({
+    getMainTable()
   }, align="lcccccc", striped=TRUE, digits=3, na="")
 
   
@@ -185,9 +201,9 @@ server <- shinyServer(function(input, output) {
       br(), syndroDesc[input$syndrome,lang],
       style="font-size:1.2em")
   })
-
   
-  output$campTable <- renderTable({
+  
+  getCampTable <- reactive({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
     myfit <- lapply(names(fitsD), function(cmp){
       f <- subset(fitsD[[cmp]][[as.integer(input$syndrome)]], dates==input$date_range[2])
@@ -204,15 +220,32 @@ server <- shinyServer(function(input, output) {
     myfit$x <- as.integer(myfit$x)
     myfit$n <- as.integer(myfit$n)
     myfit <- subset(myfit, !is.na(n))
-    myfit$p <- as.character(round(myfit$p, 1))
-    
+    myfit$p <- as.character(round(myfit$p * 100, 1))
+    myfit$zscore <- round(myfit$zscore, 3)
     if (lang=="GR") {
       names(myfit) <- c("Κέντρο", "Περιστατικά", "Σύνολο επισκέψεων", "Αναλογική νοσηρότητα (%)", "Z-score", "Ειδοποίηση", "Εγρήγορση")
     } else {
       names(myfit) <- c("Camp", "Cases", "Total\nvisits", "Proportional\nmorbidity (%)", "Z-score", "Warning", "Alert")
     }
     return(myfit)
-    
+  })
+
+  
+  output$downloadCampTable <- downloadHandler(
+    filename = function() { 
+      paste("campTable-", input$camp, "-", 
+            format(input$date_range[2], "%Y%m%d"), ".csv", sep="") 
+    },
+    content = function(file) {
+      out <- getCampTable()
+      out[,4] <- as.numeric(out[,4])
+      write.csv(out, file, row.names=FALSE, na="")
+    }
+  )
+  
+  
+  output$campTable <- renderTable({
+    getCampTable()
   }, align="lcccccc", striped=TRUE, digits=3, na="")
   
 
