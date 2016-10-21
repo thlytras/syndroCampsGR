@@ -37,7 +37,9 @@ server <- shinyServer(function(input, output) {
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
     mytabs <- list(
       tabPanel(c(EN="Plot", GR="Διάγραμμα")[lang], plotOutput("mainPlot")),
-      tabPanel(c(EN="Table", GR="Πίνακας")[lang], tableOutput("mainTable")),
+      tabPanel(c(EN="Table", GR="Πίνακας")[lang], 
+               uiOutput("ui_mainTable"),
+               tableOutput("mainTable")),
       tabPanel(c(EN="By camp", GR="Ανά κέντρο")[lang], 
                uiOutput("ui_campTable"),
                tableOutput("campTable")
@@ -45,6 +47,7 @@ server <- shinyServer(function(input, output) {
     )
     do.call(tabsetPanel, c(mytabs, id="mytbp"))
   })
+  
   
   output$ui_title <- renderUI({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
@@ -55,10 +58,12 @@ server <- shinyServer(function(input, output) {
     }
   })
   
+  
   output$ui_lang <- renderUI({
     radioButtons("lang", c(GR="Γλώσσα", EN="Language")[lang], 
                  c("Ελληνικά" = "GR", "English" = "EN"))
   })
+  
   
   output$ui_syndromes <- renderUI({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
@@ -70,6 +75,7 @@ server <- shinyServer(function(input, output) {
                   choices = syndroChoices, 
                   selected = syndroSelected)
   })
+  
   
   output$ui_camps <- renderUI({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
@@ -83,6 +89,7 @@ server <- shinyServer(function(input, output) {
                 choices = campChoices,
                 selected = campSelected)
   })
+  
   
   output$ui_rangeDates <- renderUI({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
@@ -100,6 +107,7 @@ server <- shinyServer(function(input, output) {
     }
   })
   
+  
   output$mainPlot <- renderPlot({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
     if (!exists("input") || !("camp" %in% names(input))) return()
@@ -113,14 +121,44 @@ server <- shinyServer(function(input, output) {
     plotOne(myfit, goback=as.integer(diff(input$date_range)), lang=lang)
   })
   
+  
+  output$ui_mainTable <- renderUI({
+    if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
+    if (!exists("input") || !("camp" %in% names(input))) return()
+    if (input$camp=="all") {
+      myfit <- subset(fits[[as.integer(input$syndrome)]], dates>=input$date_range[1] & dates<=input$date_range[2])
+      attr(myfit, "title") <- attr(fits[[as.integer(input$syndrome)]], "title")
+    } else {
+      myfit <- subset(fitsD[[input$camp]][[as.integer(input$syndrome)]], dates>=input$date_range[1] & dates<=input$date_range[2])
+      attr(myfit, "title") <- attr(fitsD[[input$camp]][[as.integer(input$syndrome)]], "title")
+    }
+    if (input$camp=="all") {
+      campstring <- c(EN="All camps. ", GR="Όλα τα κέντρα. ")[lang]
+    } else {
+      campstring <- paste(input$camp, "-", camps[input$camp,lang], ".")
+    }
+    p(
+      syndroDesc[input$syndrome,lang], ". ", campstring, br(),
+      c(EN="From ", GR="Από ")[lang], 
+      format(input$date_range[1], "%d-%m-%Y"), 
+      c(EN=" to ", GR=" έως ")[lang], 
+      format(input$date_range[2], "%d-%m-%Y"), ":    ",
+      strong(sum(myfit$x, na.rm=TRUE)),
+      c(EN=" cases, ", GR=" περιστατικά, ")[lang], 
+      strong(sum(myfit$n, na.rm=TRUE)),
+      c(EN=" visits.", GR=" επισκέψεις.")[lang], 
+      style="font-size:1.2em")
+  })
+  
+  
   output$mainTable <- renderTable({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
     if (!exists("input") || !("camp" %in% names(input))) return()
     if (input$camp=="all") {
-      myfit <- subset(fits[[as.integer(input$syndrome)]], dates<=input$date_range[2])
+      myfit <- subset(fits[[as.integer(input$syndrome)]], dates>=input$date_range[1] & dates<=input$date_range[2])
       attr(myfit, "title") <- attr(fits[[as.integer(input$syndrome)]], "title")
     } else {
-      myfit <- subset(fitsD[[input$camp]][[as.integer(input$syndrome)]], dates<=input$date_range[2])
+      myfit <- subset(fitsD[[input$camp]][[as.integer(input$syndrome)]], dates>=input$date_range[1] & dates<=input$date_range[2])
       attr(myfit, "title") <- attr(fitsD[[input$camp]][[as.integer(input$syndrome)]], "title")
     }
     #myfit$excess <- with(myfit, pmax(0,round(x-Pnb)))
@@ -130,14 +168,16 @@ server <- shinyServer(function(input, output) {
     myfit$alarms <- with(myfit, c("","NAI")[alarms+1])
     myfit$x <- as.integer(myfit$x)
     myfit$n <- as.integer(myfit$n)
+    myfit$p <- as.character(round(myfit$p, 1))
     if (lang=="GR") {
-      names(myfit) <- c("Ημ/νία", "Περιστατικά", "Σύνολο επισκέψεων", "Αναλογική νοσηρότητα", "Z-score", "Ειδοποίηση", "Εγρήγορση")
+      names(myfit) <- c("Ημ/νία", "Περιστατικά", "Σύνολο επισκέψεων", "Αναλογική νοσηρότητα (%)", "Z-score", "Ειδοποίηση", "Εγρήγορση")
     } else {
-      names(myfit) <- c("Date", "Cases", "Total\nvisits", "Proportional\nmorbidity", "Z-score", "Warning", "Alert")
+      names(myfit) <- c("Date", "Cases", "Total\nvisits", "Proportional\nmorbidity (%)", "Z-score", "Warning", "Alert")
     }
     return(myfit)
-  }, align="lcccccc", striped=TRUE, digits=3)
+  }, align="lcccccc", striped=TRUE, digits=3, na="")
 
+  
   output$ui_campTable <- renderUI({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
     p(c(EN="Date: ", GR="Ημερομηνία: ")[lang], strong(format(input$date_range[2], "%d-%m-%Y")), 
@@ -146,6 +186,7 @@ server <- shinyServer(function(input, output) {
       style="font-size:1.2em")
   })
 
+  
   output$campTable <- renderTable({
     if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
     myfit <- lapply(names(fitsD), function(cmp){
@@ -163,15 +204,16 @@ server <- shinyServer(function(input, output) {
     myfit$x <- as.integer(myfit$x)
     myfit$n <- as.integer(myfit$n)
     myfit <- subset(myfit, !is.na(n))
+    myfit$p <- as.character(round(myfit$p, 1))
     
     if (lang=="GR") {
-      names(myfit) <- c("Κέντρο", "Περιστατικά", "Σύνολο επισκέψεων", "Αναλογική νοσηρότητα", "Z-score", "Ειδοποίηση", "Εγρήγορση")
+      names(myfit) <- c("Κέντρο", "Περιστατικά", "Σύνολο επισκέψεων", "Αναλογική νοσηρότητα (%)", "Z-score", "Ειδοποίηση", "Εγρήγορση")
     } else {
-      names(myfit) <- c("Camp", "Cases", "Total\nvisits", "Proportional\nmorbidity", "Z-score", "Warning", "Alert")
+      names(myfit) <- c("Camp", "Cases", "Total\nvisits", "Proportional\nmorbidity (%)", "Z-score", "Warning", "Alert")
     }
     return(myfit)
     
-  }, align="lcccccc", striped=TRUE, digits=3)
+  }, align="lcccccc", striped=TRUE, digits=3, na="")
   
 
 })
