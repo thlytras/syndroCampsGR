@@ -7,6 +7,7 @@ rangeDates <- c(rangeDates-35, rangeDates)
 rangeDates.ini <- range(fits[[1]]$dates, na.rm=TRUE)
 
 library(shiny)
+library(WriteXLS)
 
 ui <- shinyUI(fluidPage(
   
@@ -179,12 +180,15 @@ server <- shinyServer(function(input, output) {
     filename = function() { 
       paste("mainTable-", input$camp, "-", 
             format(input$date_range[1], "%Y%m%d"), "-",
-            format(input$date_range[2], "%Y%m%d"), ".csv", sep="") 
+            format(input$date_range[2], "%Y%m%d"), ".xls", sep="") 
     },
     content = function(file) {
       out <- getMainTable()
       out[,4] <- as.numeric(out[,4])
-      write.csv(out, file, row.names=FALSE, na="")
+      sheetname <- paste("mainTable-", input$camp, "-", 
+                         format(input$date_range[1], "%Y%m%d"), "-",
+                         format(input$date_range[2], "%Y%m%d"), sep="") 
+      WriteXLS("out", file, sheetname)
     }
   )
   
@@ -234,12 +238,14 @@ server <- shinyServer(function(input, output) {
   output$downloadCampTable <- downloadHandler(
     filename = function() { 
       paste("campTable-", input$camp, "-", 
-            format(input$date_range[2], "%Y%m%d"), ".csv", sep="") 
+            format(input$date_range[2], "%Y%m%d"), ".xls", sep="") 
     },
     content = function(file) {
       out <- getCampTable()
       out[,4] <- as.numeric(out[,4])
-      write.csv(out, file, row.names=FALSE, na="")
+      sheetname <- paste("campTable-", input$camp, "-", 
+                         format(input$date_range[2], "%Y%m%d"), sep="") 
+      WriteXLS("out", file, sheetname)
     }
   )
   
