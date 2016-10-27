@@ -24,7 +24,8 @@ ui <- shinyUI(fluidPage(
       uiOutput("ui_camps"),
       uiOutput("ui_rangeDates"),
       img(src='keelpno.png', width=199, height=157, 
-          style="display: block; margin-left: auto; margin-right: auto;")
+          style="display: block; margin-left: auto; margin-right: auto;"),
+      uiOutput("ui_lastUpd")
     ),
     mainPanel(
       uiOutput("ui_mytabs")
@@ -109,6 +110,14 @@ server <- shinyServer(function(input, output) {
                      min=rangeDates.ini[1], max=rangeDates.ini[2], format="dd-mm-yyyy",
                      lang="en")
     }
+  })
+  
+  
+  output$ui_lastUpd <- renderUI({
+    if (exists("input") && ("lang" %in% names(input))) lang <- input$lang
+    helpText(
+      c(EN="Last data update: ", GR="Τελευταία ενημέρωση στοιχείων: ")[lang],
+      br(), format(analysis.time, "%Y-%m-%d %H:%M"), style="text-align:center")
   })
   
   

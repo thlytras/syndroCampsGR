@@ -367,6 +367,8 @@ for (lang in c("EN", "GR")) {
 
 lang <- "EN"
 
+analysis.time <- Sys.time()
+
 save.image(sprintf("output/daily/%s/output %s.RData", tgtdatef2, tgtdatef2))
 save.image("output/latest_output.RData")
 
