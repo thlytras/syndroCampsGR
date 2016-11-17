@@ -59,7 +59,7 @@ fitOne <- function(x, n, dates, title=c(EN=NA, GR=NA), wkly=FALSE, Z=2, excludeO
     t <- (1:length(x))-1
     x.fit <- x
     while(TRUE) {
-        if ((spline && length(x.fit)>c(30,4)[wkly+1] && sum(x.fit==0, na.rm=TRUE)/sum(x.fit>0, na.rm=TRUE)<3) || forceSpline) {
+        if ((spline && length(x.fit)>c(30,4)[wkly+1] && sum(x.fit==0, na.rm=TRUE)/sum(x.fit>0, na.rm=TRUE)<3 && sum(rev(x.fit)[1:(splineDenominator*2)], na.rm=TRUE)>0) || forceSpline) {
             # Spline, 1 knot/month
             m <- glm(x.fit ~ ns(t,df=floor(length(x)/splineDenominator)), offset=log(n), family="quasipoisson")
         } else {
