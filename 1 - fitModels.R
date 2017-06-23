@@ -25,6 +25,14 @@ dat <- subset(dat, hmedil<tgtdate)
 dat <- subset(dat, hmedil>="2016-5-16")
 dat <- subset(dat, !is.na(vissum))
 
+if (sum(is.na(dat$codecamp))) {
+  stop(sprintf("Σφάλμα: υπάρχουν κενά στον κωδικό κέντρου, στα aa: %s", paste(which(is.na(dat$codecamp)), collapse=", ")))
+}
+zeroVis <- which(rowSums(dat[,c(paste("n",1:5,"sum", sep=""), paste("n",6:14, sep=""))], na.rm=TRUE)>0 & rowSums(dat[,paste("vis", c("a","b","c","sum"), sep="")], na.rm=TRUE)==0)
+if (length(zeroVis)>0) {
+  stop(sprintf("Σφάλμα: μηδενικές επισκέψεις αλλά μη μηδενικά σύνδρομα στα aa: %s", paste(dat[zeroVis,"aa"], collapse=", ")))
+}
+
 camps <- data.frame(codecamp = unique(dat$codecamp),
     EN = sapply(unique(dat$codecamp), function(x)rev(dat$campname[dat$codecamp==x])[1]),
     GR = sapply(unique(dat$codecamp), function(x)rev(dat$camp[dat$codecamp==x])[1]), stringsAsFactors=FALSE)
@@ -58,10 +66,17 @@ fitOne <- function(x, n, dates, title=c(EN=NA, GR=NA), wkly=FALSE, Z=2, excludeO
     p <- x/n
     t <- (1:length(x))-1
     x.fit <- x
+
+if (sum(tail(x.fit,35), na.rm=TRUE)==0) spline <- FALSE
+
     while(TRUE) {
         if ((spline && length(x.fit)>c(30,4)[wkly+1] && sum(x.fit==0, na.rm=TRUE)/sum(x.fit>0, na.rm=TRUE)<3 && sum(rev(x.fit)[1:(splineDenominator*2)], na.rm=TRUE)>0) || forceSpline) {
             # Spline, 1 knot/month
-            m <- glm(x.fit ~ ns(t,df=floor(length(x)/splineDenominator)), offset=log(n), family="quasipoisson")
+            try(m <- glm(x.fit ~ ns(t,df=floor(length(x)/splineDenominator)), offset=log(n), family="quasipoisson"), silent=TRUE)
+            if (!exists("m")) {
+                m <- glm(x ~ 1, offset=log(n), family="quasipoisson")
+		warning(sprintf("Could not fit with spline, at wkly=%s and title='%s'", wkly, title["EN"]))
+            }
         } else {
             # Intercept only
             m <- glm(x ~ 1, offset=log(n), family="quasipoisson")
