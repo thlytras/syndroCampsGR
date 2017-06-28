@@ -292,10 +292,10 @@ dir.create(sprintf("output/daily/%s", tgtdatef2), showWarnings=FALSE)
 
 cat("Φτιάχνω τις αναφορές (σε δύο γλώσσες)...\n")
 lang <- "EN"
-odfWeave("input/daily-en-template.odt", sprintf("output/daily/%s/daily-en-%s.odt", tgtdatef2, tgtdatef2))
+suppressWarnings(odfWeave("input/daily-en-template.odt", sprintf("output/daily/%s/daily-en-%s.odt", tgtdatef2, tgtdatef2)))
 WriteXLS("detailsPerCampEN", sprintf("output/daily/%s/syndroDetails-en-%s.xls", tgtdatef2, tgtdatef2), SheetNames=syndroShort, FreezeRow=1)
 lang <- "GR"
-odfWeave("input/daily-gr-template.odt", sprintf("output/daily/%s/daily-gr-%s.odt", tgtdatef2, tgtdatef2))
+suppressWarnings(odfWeave("input/daily-gr-template.odt", sprintf("output/daily/%s/daily-gr-%s.odt", tgtdatef2, tgtdatef2)))
 WriteXLS("detailsPerCampGR", sprintf("output/daily/%s/syndroDetails-gr-%s.xls", tgtdatef2, tgtdatef2), SheetNames=syndroShort, FreezeRow=1)
 
 
@@ -317,12 +317,12 @@ if (tgtweek>0) {
     cat("Φτιάχνω τις εβδομαδιαίες αναφορές (σε δύο γλώσσες)...\n")
     tgtdate.bak <- tgtdate; tgtdate <- isoweekStart(tgtweek)+7
     lang <- "EN"
-    odfWeave("input/weekly-en-template.odt", paste("output/weekly/", tgtweek, "/weekly-en-", tgtweek, ".odt", sep=""))
+    suppressWarnings(odfWeave("input/weekly-en-template.odt", paste("output/weekly/", tgtweek, "/weekly-en-", tgtweek, ".odt", sep="")))
     lang <- "GR"
-    odfWeave("input/weekly-gr-template.odt", paste("output/weekly/", tgtweek, "/weekly-gr-", tgtweek, ".odt", sep=""))
+    suppressWarnings(odfWeave("input/weekly-gr-template.odt", paste("output/weekly/", tgtweek, "/weekly-gr-", tgtweek, ".odt", sep="")))
     tgtdate <- tgtdate.bak; rm(tgtdate.bak)
     
-    odfWeave("input/weekly-gr-casecount.odt", paste("output/weekly/", tgtweek, "/weekly-gr-casecount-", tgtweek, ".odt", sep=""))
+    suppressWarnings(odfWeave("input/weekly-gr-casecount.odt", paste("output/weekly/", tgtweek, "/weekly-gr-casecount-", tgtweek, ".odt", sep="")))
 }
 
 
