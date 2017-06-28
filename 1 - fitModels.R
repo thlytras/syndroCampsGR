@@ -73,7 +73,7 @@ if (sum(tail(x.fit,35), na.rm=TRUE)==0) spline <- FALSE
         if ((spline && length(x.fit)>c(30,4)[wkly+1] && sum(x.fit==0, na.rm=TRUE)/sum(x.fit>0, na.rm=TRUE)<3 && sum(rev(x.fit)[1:(splineDenominator*2)], na.rm=TRUE)>0) || forceSpline) {
             # Spline, 1 knot/month
             try(m <- glm(x.fit ~ ns(t,df=floor(length(x)/splineDenominator)), offset=log(n), family="quasipoisson"), silent=TRUE)
-            if (!exists("m")) {
+            if (!exists("m") || sum(is.na(coef(m)))>0) {
                 m <- glm(x ~ 1, offset=log(n), family="quasipoisson")
 		warning(sprintf("Could not fit with spline, at wkly=%s and title='%s'", wkly, title["EN"]))
             }
