@@ -81,10 +81,19 @@ if (sum(tail(x.fit,35), na.rm=TRUE)==0) spline <- FALSE
             # Intercept only
             m <- glm(x ~ 1, offset=log(n), family="quasipoisson")
         }
-        od <- max(1,sum(m$weights * m$residuals^2)/m$df.r)
-        Pnb <- predict(m, data.frame(x.fit=x,t=t,n=n), type="response")
-        stdp <- predict(m, data.frame(x.fit=x,t=t,n=n), se.fit=TRUE)$se.fit
-        stdpr <- predict(m, data.frame(x.fit=x,t=t,n=n), type="response", se.fit=TRUE)$se.fit
+	catchErrors <- try({
+          od <- max(1,sum(m$weights * m$residuals^2)/m$df.r)
+          Pnb <- predict(m, data.frame(x.fit=x,t=t,n=n), type="response")
+          stdp <- predict(m, data.frame(x.fit=x,t=t,n=n), se.fit=TRUE)$se.fit
+          stdpr <- predict(m, data.frame(x.fit=x,t=t,n=n), type="response", se.fit=TRUE)$se.fit
+	}, silent=TRUE)
+	if (class(catchErrors)=="try-error") {
+	  m <- glm(x ~ 1, offset=log(n), family="quasipoisson")
+          od <- max(1,sum(m$weights * m$residuals^2)/m$df.r)
+          Pnb <- predict(m, data.frame(x.fit=x,t=t,n=n), type="response")
+          stdp <- predict(m, data.frame(x.fit=x,t=t,n=n), se.fit=TRUE)$se.fit
+          stdpr <- predict(m, data.frame(x.fit=x,t=t,n=n), type="response", se.fit=TRUE)$se.fit
+	}
         UPI <- (Pnb^(2/3)+ Z*((4/9)*(Pnb^(1/3))*(od+(stdp^2)*(Pnb)))^(1/2))^(3/2)
         UPIr <- Pnb *(1 + (2/3)*Z* ( (od + stdpr^2/Pnb) /Pnb ) ^(1/2))^(3/2)
         zscore <- (x^(2/3) - Pnb^(2/3)) / ((4/9)*(Pnb^(1/3))*(od+Pnb*(stdp^2)))^(1/2)
