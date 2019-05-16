@@ -365,6 +365,17 @@ for (lang in c("EN", "GR")) {
 }
 
 
+# NEW ADDITION: *daily* casecount
+casetabDaily <- subset(aggrD, hmedil==tgtdate-1)
+casetabDaily <- aggregate(casetabDaily[,c(paste("n",1:5,"sum",sep=""), paste("n",6:14,sep=""))], by=list(casetabDaily$codecamp), sum, na.rm=TRUE)
+casetabDaily[,1] <- paste(casetabDaily[,1], "-", camps$GR[match(casetabDaily[,1], camps$codecamp)])
+colnames(casetabDaily) <- c("Κέντρο", paste(1:14, "-", syndroDesc$GR))
+casetabDaily <- rbind(casetabDaily, c("Κέντρο"="Σύνολο", as.list(colSums(casetabDaily[,-1]))))
+
+suppressWarnings(odfWeave("input/daily-gr-casecount.odt", paste("output/daily/", tgtdatef2, "/daily-gr-casecount-", tgtdatef2, ".odt", sep="")))
+
+
+
 lang <- "EN"
 
 analysis.time <- Sys.time()
